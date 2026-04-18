@@ -40,5 +40,10 @@ public class EquipoService {
         });
 
     }
+    @Transactional(readOnly = true)
+    public Optional<Equipo> buscarPorId(Long id){
+        log.info("Auditoria: Buscando equipo con ID: {}", id);
+        return repository.findById(id);
+    }
 
 }
