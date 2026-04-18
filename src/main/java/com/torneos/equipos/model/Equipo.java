@@ -24,8 +24,10 @@ public class Equipo {
     private String nombre;
 
     @NotBlank(message = "La región es obligatoria(EU, NA, LATAM, BR")
-    @Min(value = 1, message = "El ranking minimo es 1")
     private String region;
+    @NotNull(message = "El ranking es obligatorio")
+    @Min(value = 1, message = "El ranking minimo es 1")
+    private Integer ranking;
 
     @NotNull(message = "La fecha de fundacion es obligatoria")
     @PastOrPresent(message = "La fecha no puede ser futura")

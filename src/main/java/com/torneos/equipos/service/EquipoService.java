@@ -35,6 +35,7 @@ public class EquipoService {
             equipoExistente.setRegion(equipoUpdate.getRegion());
             equipoExistente.setCorreoContacto(equipoUpdate.getCorreoContacto());
             equipoExistente.setFechaFundacion(equipoUpdate.getFechaFundacion());
+            equipoExistente.setRanking(equipoUpdate.getRanking());
             return repository.save(equipoExistente);
 
         });
