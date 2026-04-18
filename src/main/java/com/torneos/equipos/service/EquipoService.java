@@ -46,5 +46,13 @@ public class EquipoService {
         log.info("Auditoria: Buscando equipo con ID: {}", id);
         return repository.findById(id);
     }
+    @Transactional
+    public Optional<Equipo> eliminar(Long id){
+        return repository.findById(id).map(equipoExistente->{
+            log.info("Auditoria: Realizando baja logica del equipo ID: {}",id);
+            equipoExistente.setActivo(false);
+            return repository.save(equipoExistente);
+        });
+    }
 
 }

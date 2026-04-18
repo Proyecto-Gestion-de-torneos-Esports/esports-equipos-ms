@@ -37,5 +37,8 @@ public class Equipo {
     @Email(message = "Debe ser un correo de valido")
     private String correoContacto;
 
+    @Column(name = "activo")
+    private Boolean activo = true;
+
 
 }

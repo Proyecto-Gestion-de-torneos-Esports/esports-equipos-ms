@@ -37,6 +37,10 @@ public class EquipoController {
     public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Equipo equipo){
         return service.actualizar(id, equipo).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminar(@PathVariable Long id){
+        return service.eliminar(id).map(equipo -> ResponseEntity.noContent().build()).orElseGet(()->ResponseEntity.notFound().build());
+    }
     /* Este bloque funciona para revisar lo que se ingresa y si no cumple con las validaciones
      no permite que se registren en el caso de guardar y dice que es lo que fallo exactamente.*/
 
