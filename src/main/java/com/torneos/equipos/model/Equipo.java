@@ -25,6 +25,7 @@ public class Equipo {
 
     @NotBlank(message = "La región es obligatoria(EU, NA, LATAM, BR")
     private String region;
+
     @NotNull(message = "El ranking es obligatorio")
     @Min(value = 1, message = "El ranking minimo es 1")
     private Integer ranking;
