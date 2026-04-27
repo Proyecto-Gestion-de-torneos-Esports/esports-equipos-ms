@@ -9,35 +9,33 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "equipos")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "EQUIPOS")
 public class Equipo {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "equipo_seq")
+    @SequenceGenerator(name = "equipo_seq", sequenceName = "EQUIPO_SEQ", allocationSize = 1)
     private Long id; //Ocupo Long en vez de Integer porque esto esta pensado como proyecto grande
     //(en un contexto de millones de personas por lo cual con integer quedaria corto)
 
-    @NotBlank(message = "El nombre del equipo no puede estar vacio")
-    @Size(min = 3, max = 20, message = "El nombre debe tener entre 3 y 20 caracteres")
+    @Column(nullable = false, length = 20)
     private String nombre;
 
-    @NotBlank(message = "La región es obligatoria(EU, NA, LATAM, BR")
+    @Column(nullable = false, length = 50)
     private String region;
 
-    @NotNull(message = "El ranking es obligatorio")
-    @Min(value = 1, message = "El ranking minimo es 1")
+    @Column(nullable = false)
     private Integer ranking;
 
-    @NotNull(message = "La fecha de fundacion es obligatoria")
-    @PastOrPresent(message = "La fecha no puede ser futura")
+    @Column(name = "fecha_fundacion", nullable = false)
     private LocalDate fechaFundacion;
 
-    @Email(message = "Debe ser un correo de valido")
+    @Column(name = "correo_contacto",length = 100)
     private String correoContacto;
 
-    @Column(name = "activo")
+    @Column(name = "activo", nullable = false)
     private Boolean activo = true;
 
 
