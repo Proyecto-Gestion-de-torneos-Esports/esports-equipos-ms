@@ -30,7 +30,7 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
     List<Equipo> buscarPorRegionOrdenados(@Param("region") String region);
 
     //Query para traer el top que queramos del torneo por ejemplo el top 3 top 5 top 10, etc
-    @Query(value = "SELECT * FROM equipos WHERE activo = 1 ORDER BY ranking ASC LIMIT :limite",
+    @Query(value = "SELECT * FROM equipos WHERE activo = 1 ORDER BY ranking ASC FETCH FIRST :top ROWS ONLY",
     nativeQuery = true)
-    List<Equipo> obtenerTopEquipos(@Param("limite") Integer limite);
+    List<Equipo> obtenerTopEquipos(@Param("top") Integer top);
 }
