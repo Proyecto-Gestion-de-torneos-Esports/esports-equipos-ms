@@ -48,12 +48,14 @@ public class EquipoController {
 
     //Eliminar
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id){
+    public ResponseEntity<Void> eliminar(@PathVariable Long id, @RequestParam String rol){
+        if (!rol.equalsIgnoreCase("ARBITRO") && !rol.equalsIgnoreCase("ADMIN")){
+            throw new RuntimeException("Acceso denegado: solo los Arbitros y Administradores estan autorizados para eliminar equipos");
+        }
         if (equipoService.buscarPorId(id).isEmpty()){
             return ResponseEntity.notFound().build();
         }
         equipoService.eliminar(id);
-
         return ResponseEntity.noContent().build();
     }
     //Busqueda top equipos

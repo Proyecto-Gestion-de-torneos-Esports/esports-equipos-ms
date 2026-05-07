@@ -23,11 +23,11 @@ public class DataInitializer implements CommandLineRunner {
 
         // 1. Verificamos si ya hay datos en la nube de Oracle
         if (equipoRepository.count() > 0) {
-            log.info(">>> DataInitializer: La base de datos ya tiene {} registros. Omitiendo carga inicial.", equipoRepository.count());
+            log.info("La base de datos ya tiene {} registros. Omitiendo carga inicial.", equipoRepository.count());
             return;
         }
 
-        log.info(">>> DataInitializer: Base de datos vacía. Cargando 20 equipos de respaldo...");
+        log.info("Base de datos vacía. Cargando 20 equipos de respaldo...");
 
         // 2. Insertamos los datos de Mockaroo (id en null para que Oracle use la secuencia)
         equipoRepository.saveAll(List.of(
