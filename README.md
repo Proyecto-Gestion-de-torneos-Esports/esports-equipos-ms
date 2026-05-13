@@ -13,7 +13,7 @@
 ## Tips para conectarse correctamente a la base de datos y correr el programa:
 En propierties poner lo siguiente:
 ```
-server.port = 8001
+server.port = 8002
 
 spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
 
