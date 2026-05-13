@@ -2,6 +2,7 @@ package com.torneos.equipos.controller;
 
 import com.torneos.equipos.dto.EquipoRequestDTO;
 import com.torneos.equipos.dto.EquipoResponseDTO;
+import com.torneos.equipos.model.Rol;
 import com.torneos.equipos.service.EquipoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,15 @@ public class EquipoController {
     public ResponseEntity<List<EquipoResponseDTO>> obtenerTodos(){
         return ResponseEntity.ok(equipoService.listarTodos());
     }
+    @PostMapping("/{id}/integrantes")
+    public ResponseEntity<?> inscribirIntegrante(
+            @PathVariable Long id,
+            @RequestParam Long usuarioId,
+            @RequestParam Rol rol) { // Usa tu Enum local
+
+        String respuesta = equipoService.inscribirIntegrante(id, usuarioId, rol);
+        return ResponseEntity.ok(respuesta);
+    }
 
     //Obtener todos los equipos que esten activos
     @GetMapping("/activos")
@@ -34,6 +44,7 @@ public class EquipoController {
     public ResponseEntity<EquipoResponseDTO> obtenerPorId(@PathVariable Long id){
         return equipoService.buscarPorId(id).map(ResponseEntity::ok).orElseGet(()->ResponseEntity.notFound().build());
     }
+
     //Crear equipo
     @PostMapping
     public ResponseEntity<EquipoResponseDTO> crear(@Valid @RequestBody EquipoRequestDTO dto){

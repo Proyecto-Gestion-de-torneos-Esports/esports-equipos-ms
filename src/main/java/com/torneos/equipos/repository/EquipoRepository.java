@@ -14,13 +14,13 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
 
     //Aqui agregare los metodos personalizados
 
-    List<Equipo> findAllByOrderByIdAsc();
+    List<Equipo> findAllByOrderByEquipoIdAsc();
 
     //Metodo para traer solo a los equipos activos
     List<Equipo> findByActivoTrue();
 
     //Metodo para buscar por Id si el equipo esta activo
-    Optional<Equipo> findByIdAndActivoTrue(Long id);
+    Optional<Equipo> findByEquipoIdAndActivoTrue(Long equipoId);
 
     //Metodo para buscar por nombre
     List<Equipo> findByNombreContainingIgnoreCaseAndActivoTrue(String nombre);

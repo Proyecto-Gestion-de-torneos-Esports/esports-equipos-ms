@@ -4,12 +4,17 @@ package com.torneos.equipos.service;
 import com.torneos.equipos.dto.EquipoRequestDTO;
 import com.torneos.equipos.dto.EquipoResponseDTO;
 import com.torneos.equipos.model.Equipo;
+import com.torneos.equipos.model.Integrantes;
+import com.torneos.equipos.model.Rol;
 import com.torneos.equipos.repository.EquipoRepository;
+import com.torneos.equipos.repository.IntegrantesRepository;
+import com.torneos.equipos.webclient.UsuarioClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -20,11 +25,13 @@ import java.util.stream.Collectors;
 public class EquipoService {
 
     private final EquipoRepository equipoRepository;
+    private final IntegrantesRepository integrantesRepository;
+    private final UsuarioClient usuarioClient;
 
 
     private EquipoResponseDTO mapToDTO(Equipo equipo){
         return new EquipoResponseDTO(
-                equipo.getId(),
+                equipo.getEquipoId(),
                 equipo.getNombre(),
                 equipo.getRegion(),
                 equipo.getRanking(),
@@ -37,7 +44,7 @@ public class EquipoService {
     //Para obtener todos los equipos activos e inactivos
     public List<EquipoResponseDTO> listarTodos(){
         log.info("Listando todos los equipos");
-        List<Equipo> equipos = equipoRepository.findAllByOrderByIdAsc();
+        List<Equipo> equipos = equipoRepository.findAllByOrderByEquipoIdAsc();
         log.info("Hay {} equipos en total", equipos.size());
         return equipos.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
@@ -55,7 +62,7 @@ public class EquipoService {
     //Para obtener equipo mediante el Id
     @Transactional(readOnly = true)
     public Optional<EquipoResponseDTO> buscarPorId(Long id){
-        Optional<EquipoResponseDTO> resultado = equipoRepository.findByIdAndActivoTrue(id).map(this::mapToDTO);
+        Optional<EquipoResponseDTO> resultado = equipoRepository.findByEquipoIdAndActivoTrue(id).map(this::mapToDTO);
 
         resultado.ifPresentOrElse(
                 dto->log.info("Equipo '{}' encontrado correctamente", dto.getNombre()),
@@ -77,7 +84,8 @@ public class EquipoService {
                 dto.getRanking(),
                 dto.getFechaFundacion(),
                 dto.getCorreoContacto(),
-                true
+                true,
+                new ArrayList<>()
 
         );
         EquipoResponseDTO respuesta = mapToDTO(equipoRepository.save(equipo));
@@ -87,7 +95,7 @@ public class EquipoService {
 
     @Transactional
     public Optional<EquipoResponseDTO> actualizar(Long id, EquipoRequestDTO dto){
-        return equipoRepository.findByIdAndActivoTrue(id).map(existente->{
+        return equipoRepository.findByEquipoIdAndActivoTrue(id).map(existente->{
             log.info("Equipo con ID: {} encontrado. Actualizando sus datos",id);
             existente.setNombre(dto.getNombre());
             existente.setRegion(dto.getRegion());
@@ -105,12 +113,12 @@ public class EquipoService {
     @Transactional
     public void eliminar(Long id){
         log.info("Procesando solicitud para eliminar (inactivo) el equipo con ID: {}",id);
-        equipoRepository.findByIdAndActivoTrue(id).ifPresentOrElse(existente->{
-            existente.setActivo(false);
-            equipoRepository.save(existente);
-            log.info("El equipo '{}' (ID: {}) fue desactivado correctamente", existente.getNombre(), id);
-        },()->{
-            log.warn("Intento de eliminación fallido: No se encontro ningun equipo activo con el ID: {}", id);
+        equipoRepository.findByEquipoIdAndActivoTrue(id).ifPresentOrElse(existente->{
+                    existente.setActivo(false);
+                    equipoRepository.save(existente);
+                    log.info("El equipo '{}' (ID: {}) fue desactivado correctamente", existente.getNombre(), id);
+                },()->{
+                    log.warn("Intento de eliminación fallido: No se encontro ningun equipo activo con el ID: {}", id);
                 }
         );
     }
@@ -120,6 +128,27 @@ public class EquipoService {
         List<Equipo> equiposTop = equipoRepository.obtenerTopEquipos(top);
         log.info("Consulta exitosa. Hay {} equipos para el Top {}", equiposTop.size(), top);
         return equipoRepository.obtenerTopEquipos(top).stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
+    public String inscribirIntegrante(Long equipoId, Long usuarioId, Rol rol) {
+        Equipo equipo = equipoRepository.findById(equipoId)
+                .orElseThrow(() -> new RuntimeException("Equipo no encontrado con ID: " + equipoId));
+
+        if (equipo.getListaIntegrantes().size() >= 6) {
+            throw new RuntimeException("Error: El equipo ya alcanzó el máximo de 6 integrantes (incluyendo coach).");
+        }
+
+        String nombreReal = usuarioClient.obtenerNombreUsuario(usuarioId);
+
+        Integrantes nuevo = new Integrantes();
+        nuevo.setUsuarioId(usuarioId);
+        nuevo.setNombre(nombreReal);
+        nuevo.setRol(rol);
+        nuevo.setEquipo(equipo);
+
+        integrantesRepository.save(nuevo);
+
+        return "Usuario '" + nombreReal + "' inscrito correctamente en el equipo " + equipo.getNombre();
     }
 
 

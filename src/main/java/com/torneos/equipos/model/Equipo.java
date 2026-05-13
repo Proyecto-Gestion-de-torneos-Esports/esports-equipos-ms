@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -17,7 +19,7 @@ public class Equipo {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "equipo_seq")
     @SequenceGenerator(name = "equipo_seq", sequenceName = "EQUIPO_SEQ", allocationSize = 1)
-    private Long id; //Ocupo Long en vez de Integer porque esto esta pensado como proyecto grande
+    private Long equipoId; //Ocupo Long en vez de Integer porque esto esta pensado como proyecto grande
     //(en un contexto de millones de personas por lo cual con integer quedaria corto)
 
     @Column(nullable = false, length = 20)
@@ -37,6 +39,9 @@ public class Equipo {
 
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
+
+    @OneToMany(mappedBy = "equipo", cascade = CascadeType.ALL)
+    private List<Integrantes> listaIntegrantes = new ArrayList<>();
 
 
 }
