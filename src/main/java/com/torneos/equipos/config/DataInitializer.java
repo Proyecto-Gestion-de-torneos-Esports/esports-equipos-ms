@@ -21,8 +21,6 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-
-        // 1. Verificamos si ya hay datos en la nube de Oracle
         if (equipoRepository.count() > 0) {
             log.info("La base de datos ya tiene {} registros. Omitiendo carga inicial.", equipoRepository.count());
             return;

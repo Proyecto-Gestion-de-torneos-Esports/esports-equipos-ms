@@ -40,9 +40,9 @@ public class EquipoController {
         return ResponseEntity.ok(equipoService.obtenerActivos());
     }
     //Buscar por Id
-    @GetMapping("/{id}")
-    public ResponseEntity<EquipoResponseDTO> obtenerPorId(@PathVariable Long id){
-        return equipoService.buscarPorId(id).map(ResponseEntity::ok).orElseGet(()->ResponseEntity.notFound().build());
+    @GetMapping("/{equipoId}")
+    public ResponseEntity<EquipoResponseDTO> obtenerPorId(@PathVariable Long equipoId){
+        return equipoService.buscarPorId(equipoId).map(ResponseEntity::ok).orElseGet(()->ResponseEntity.notFound().build());
     }
 
     //Crear equipo
@@ -52,13 +52,13 @@ public class EquipoController {
     }
 
     //Actualizar
-    @PutMapping("/{id}")
+    @PutMapping("/{equipoId}")
     public ResponseEntity<EquipoResponseDTO> actualizar(@PathVariable Long id, @Valid @RequestBody EquipoRequestDTO dto){
         return equipoService.actualizar(id, dto).map(ResponseEntity::ok).orElseGet(()->ResponseEntity.notFound().build());
     }
 
     //Eliminar
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{equipoId}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id, @RequestParam String rol){
         if (!rol.equalsIgnoreCase("ARBITRO") && !rol.equalsIgnoreCase("ADMIN")){
             throw new RuntimeException("Acceso denegado: solo los Arbitros y Administradores estan autorizados para eliminar equipos");

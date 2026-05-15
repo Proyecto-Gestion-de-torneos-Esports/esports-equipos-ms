@@ -12,8 +12,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "INTEGRANTES")
 public class Integrantes {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "integrante_seq")
-    @SequenceGenerator(name = "integrante_seq", sequenceName = "INTEGRANTE_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long integranteId;
 
     @Column(name = "usuario_id",nullable = false)

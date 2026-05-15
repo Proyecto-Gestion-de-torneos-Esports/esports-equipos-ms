@@ -17,10 +17,8 @@ import java.util.List;
 @Table(name = "EQUIPOS")
 public class Equipo {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "equipo_seq")
-    @SequenceGenerator(name = "equipo_seq", sequenceName = "EQUIPO_SEQ", allocationSize = 1)
-    private Long equipoId; //Ocupo Long en vez de Integer porque esto esta pensado como proyecto grande
-    //(en un contexto de millones de personas por lo cual con integer quedaria corto)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long equipoId;
 
     @Column(nullable = false, length = 20)
     private String nombre;

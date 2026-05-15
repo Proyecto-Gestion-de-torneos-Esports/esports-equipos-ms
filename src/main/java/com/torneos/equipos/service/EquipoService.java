@@ -1,6 +1,9 @@
 package com.torneos.equipos.service;
 
 
+import com.torneos.equipos.client.AuditoriaClient;
+import com.torneos.equipos.client.UsuarioClient;
+import com.torneos.equipos.dto.AuditoriaRequestDTO;
 import com.torneos.equipos.dto.EquipoRequestDTO;
 import com.torneos.equipos.dto.EquipoResponseDTO;
 import com.torneos.equipos.model.Equipo;
@@ -8,12 +11,12 @@ import com.torneos.equipos.model.Integrantes;
 import com.torneos.equipos.model.Rol;
 import com.torneos.equipos.repository.EquipoRepository;
 import com.torneos.equipos.repository.IntegrantesRepository;
-import com.torneos.equipos.webclient.UsuarioClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +30,7 @@ public class EquipoService {
     private final EquipoRepository equipoRepository;
     private final IntegrantesRepository integrantesRepository;
     private final UsuarioClient usuarioClient;
+    private final AuditoriaClient auditoriaClient;
 
 
     private EquipoResponseDTO mapToDTO(Equipo equipo){
@@ -61,12 +65,12 @@ public class EquipoService {
     }
     //Para obtener equipo mediante el Id
     @Transactional(readOnly = true)
-    public Optional<EquipoResponseDTO> buscarPorId(Long id){
-        Optional<EquipoResponseDTO> resultado = equipoRepository.findByEquipoIdAndActivoTrue(id).map(this::mapToDTO);
+    public Optional<EquipoResponseDTO> buscarPorId(Long equipoId){
+        Optional<EquipoResponseDTO> resultado = equipoRepository.findByEquipoIdAndActivoTrue(equipoId).map(this::mapToDTO);
 
         resultado.ifPresentOrElse(
                 dto->log.info("Equipo '{}' encontrado correctamente", dto.getNombre()),
-                ()->log.warn("No se encontro ningun equipo activo con el ID: {}", id)
+                ()->log.warn("No se encontro ningun equipo activo con el ID: {}", equipoId)
 
         );
         return resultado;
@@ -90,6 +94,9 @@ public class EquipoService {
         );
         EquipoResponseDTO respuesta = mapToDTO(equipoRepository.save(equipo));
         log.info("Equipo '{}' creado y guardado correctamente en la base de datos",dto.getNombre());
+
+
+
         return respuesta;
     }
 
@@ -106,6 +113,9 @@ public class EquipoService {
 
             EquipoResponseDTO respuesta = mapToDTO(equipoRepository.save(existente));
             log.info("El Equipo '{}' (ID: {}) fue actualizado correctamente", respuesta.getNombre(), id);
+
+            String detalleAuditoria = "se actualizo el equipo con ID: " + id;
+            generarAuditoria(detalleAuditoria);
             return respuesta;
         });
     }
@@ -117,6 +127,9 @@ public class EquipoService {
                     existente.setActivo(false);
                     equipoRepository.save(existente);
                     log.info("El equipo '{}' (ID: {}) fue desactivado correctamente", existente.getNombre(), id);
+                    String detalleAuditoria = "se desactivo el equipo; " + existente.getNombre() + " con ID: " + id;
+                    generarAuditoria(detalleAuditoria);
+
                 },()->{
                     log.warn("Intento de eliminación fallido: No se encontro ningun equipo activo con el ID: {}", id);
                 }
@@ -138,7 +151,7 @@ public class EquipoService {
             throw new RuntimeException("Error: El equipo ya alcanzó el máximo de 6 integrantes (incluyendo coach).");
         }
 
-        String nombreReal = usuarioClient.obtenerNombreUsuario(usuarioId);
+        String nombreReal = usuarioClient.obtenerUsuarioPorId(usuarioId).getNombre();
 
         Integrantes nuevo = new Integrantes();
         nuevo.setUsuarioId(usuarioId);
@@ -149,7 +162,19 @@ public class EquipoService {
         integrantesRepository.save(nuevo);
 
         return "Usuario '" + nombreReal + "' inscrito correctamente en el equipo " + equipo.getNombre();
+
     }
+
+    public void generarAuditoria(String detalle){
+        AuditoriaRequestDTO dto = new AuditoriaRequestDTO();
+        LocalDate ahora = LocalDate.now();
+        dto.setDetalle(detalle);
+        dto.setFecha(ahora);
+        auditoriaClient.generarAuditoria(dto);
+        log.info("Auditoria generada con exito!");
+    }
+
+
 
 
 
