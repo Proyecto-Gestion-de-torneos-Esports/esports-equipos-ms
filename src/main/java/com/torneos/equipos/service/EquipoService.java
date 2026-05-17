@@ -35,12 +35,14 @@ public class EquipoService {
 
 
     private EquipoResponseDTO mapToDTO(Equipo equipo){
+        int cantidad = (equipo.getListaIntegrantes()!= null) ? equipo.getListaIntegrantes().size() : 0;
         return new EquipoResponseDTO(
                 equipo.getEquipoId(),
                 equipo.getNombre(),
                 equipo.getRegion(),
                 equipo.getFechaFundacion(),
                 equipo.getCorreoContacto(),
+                cantidad,
                 equipo.getActivo()
         );
     }
@@ -58,9 +60,7 @@ public class EquipoService {
     public List<EquipoResponseDTO> obtenerActivos(){
         log.info("Listando solo los equipos activos");
         List<Equipo> activos = equipoRepository.findByActivoTrue();
-
         log.info("Hay {} equipos activos", activos.size());
-
         return activos.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
     //Para obtener equipo mediante el Id
@@ -71,11 +71,9 @@ public class EquipoService {
         resultado.ifPresentOrElse(
                 dto->log.info("Equipo '{}' encontrado correctamente", dto.getNombre()),
                 ()->log.warn("No se encontro ningun equipo activo con el ID: {}", equipoId)
-
         );
         return resultado;
     }
-
     //Para guardar un equipo
     @Transactional
     public EquipoResponseDTO guardar(EquipoRequestDTO dto){
@@ -87,10 +85,11 @@ public class EquipoService {
                 dto.getCorreoContacto(),
                 true,
                 new ArrayList<>()
-
         );
         EquipoResponseDTO respuesta = mapToDTO(equipoRepository.save(equipo));
         log.info("Equipo '{}' creado y guardado correctamente en la base de datos",dto.getNombre());
+        String detalleAuditoria = "Se creo un nuevo equipo con el ID:" + respuesta.getEquipoId();
+        generarAuditoria(detalleAuditoria);
         return respuesta;
     }
 
@@ -107,7 +106,7 @@ public class EquipoService {
             EquipoResponseDTO respuesta = mapToDTO(equipoRepository.save(existente));
             log.info("El Equipo '{}' (ID: {}) fue actualizado correctamente", respuesta.getNombre(), id);
 
-            String detalleAuditoria = "se actualizo el equipo con ID: " + id;
+            String detalleAuditoria = "Se actualizo el equipo con ID: " + id;
             generarAuditoria(detalleAuditoria);
             return respuesta;
         });
@@ -130,9 +129,8 @@ public class EquipoService {
         existente.setActivo(false);
         equipoRepository.save(existente);
 
-        log.info("El equipo '{}' (ID: {}) fue desactivado correctamente por el ejecutor ID: {}",
-                existente.getNombre(), equipoId, ejecutorId);
-        String detalleAuditoria = "El usuario ID " + ejecutorId + " desactivó el equipo; " + existente.getNombre() + " con ID: " + equipoId;
+        log.info("El equipo '{}' (ID: {}) fue desactivado correctamente por el ejecutor ID: {}", existente.getNombre(), equipoId, ejecutorId);
+        String detalleAuditoria = "Se desactivó el equipo con ID:" + equipoId;
         generarAuditoria(detalleAuditoria);
     }
 
@@ -166,6 +164,13 @@ public class EquipoService {
                 nombreReal, usuarioId, rol, equipo.getNombre(), ejecutorId);
         return "Usuario '" + nombreReal + "' inscrito correctamente en el equipo " + equipo.getNombre();
     }
+
+    public List<Integrantes> obtenerIntegrantesPorEquipo(Long equipoId) {
+        Equipo equipo = equipoRepository.findById(equipoId)
+                .orElseThrow(() -> new RuntimeException("Error: Equipo no encontrado con ID " + equipoId));
+        return equipo.getListaIntegrantes();
+    }
+
     public void generarAuditoria(String detalle){
         AuditoriaRequestDTO dto = new AuditoriaRequestDTO();
         LocalDate ahora = LocalDate.now();

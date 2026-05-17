@@ -2,6 +2,7 @@ package com.torneos.equipos.controller;
 
 import com.torneos.equipos.dto.EquipoRequestDTO;
 import com.torneos.equipos.dto.EquipoResponseDTO;
+import com.torneos.equipos.model.Integrantes;
 import com.torneos.equipos.model.Rol;
 import com.torneos.equipos.service.EquipoService;
 import jakarta.validation.Valid;
@@ -24,13 +25,20 @@ public class EquipoController {
     public ResponseEntity<List<EquipoResponseDTO>> obtenerTodos(){
         return ResponseEntity.ok(equipoService.listarTodos());
     }
-        @PostMapping("/{equipoId}/integrantes")
-        public ResponseEntity<?> inscribirIntegrante(@PathVariable Long equipoId, @RequestParam Long usuarioId,
-                @RequestParam Rol rol,
-                @RequestHeader("usuarioId") Long ejecutorId) {
-            String respuesta = equipoService.inscribirIntegrante(equipoId, usuarioId, rol, ejecutorId);
-            return ResponseEntity.ok(respuesta);
-        }
+    @GetMapping("/{equipoId}/integrantes")
+    public ResponseEntity<List<Integrantes>> listarIntegrantes(@PathVariable Long equipoId) {
+
+        List<Integrantes> integrantes = equipoService.obtenerIntegrantesPorEquipo(equipoId);
+        return ResponseEntity.ok(integrantes);
+    }
+
+    @PostMapping("/{equipoId}/integrantes")
+    public ResponseEntity<?> inscribirIntegrante(@PathVariable Long equipoId, @RequestParam Long usuarioId, @RequestParam Rol rol,
+                                                 @RequestHeader("usuarioId") Long ejecutorId) {
+        String respuesta = equipoService.inscribirIntegrante(equipoId, usuarioId, rol, ejecutorId);
+        return ResponseEntity.ok(respuesta);
+    }
+
     @GetMapping("/activos")
     public ResponseEntity<List<EquipoResponseDTO>> obtenerActivos(){
         return ResponseEntity.ok(equipoService.obtenerActivos());

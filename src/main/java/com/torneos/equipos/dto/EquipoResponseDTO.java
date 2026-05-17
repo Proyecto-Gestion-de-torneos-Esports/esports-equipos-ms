@@ -1,10 +1,12 @@
 package com.torneos.equipos.dto;
 
+import com.torneos.equipos.model.Integrantes;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -16,5 +18,6 @@ public class EquipoResponseDTO {
     private String region;
     private LocalDate fechaFundacion;
     private String correoContacto;
+    private Integer cantidadIntegrantes;
     private Boolean activo;
 }
