@@ -19,10 +19,6 @@ public class EquipoRequestDTO {
     @NotBlank(message = "La región es obligatoria(EU,NA,LATAM,BR,etc)")
     private String region;
 
-    @NotNull(message = "El ranking es obligatorio")
-    @Min(value = 1, message = "El ranking minimo es 1")
-    private Integer ranking;
-
     @NotNull(message = "La fecha de fundación es obligatoria")
     @PastOrPresent(message = "La fecha no puede ser futura")
     private LocalDate fechaFundacion;

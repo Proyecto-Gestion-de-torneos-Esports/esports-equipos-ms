@@ -24,17 +24,13 @@ public class EquipoController {
     public ResponseEntity<List<EquipoResponseDTO>> obtenerTodos(){
         return ResponseEntity.ok(equipoService.listarTodos());
     }
-    @PostMapping("/{id}/integrantes")
-    public ResponseEntity<?> inscribirIntegrante(
-            @PathVariable Long id,
-            @RequestParam Long usuarioId,
-            @RequestParam Rol rol) { // Usa tu Enum local
-
-        String respuesta = equipoService.inscribirIntegrante(id, usuarioId, rol);
-        return ResponseEntity.ok(respuesta);
-    }
-
-    //Obtener todos los equipos que esten activos
+        @PostMapping("/{equipoId}/integrantes")
+        public ResponseEntity<?> inscribirIntegrante(@PathVariable Long equipoId, @RequestParam Long usuarioId,
+                @RequestParam Rol rol,
+                @RequestHeader("usuarioId") Long ejecutorId) {
+            String respuesta = equipoService.inscribirIntegrante(equipoId, usuarioId, rol, ejecutorId);
+            return ResponseEntity.ok(respuesta);
+        }
     @GetMapping("/activos")
     public ResponseEntity<List<EquipoResponseDTO>> obtenerActivos(){
         return ResponseEntity.ok(equipoService.obtenerActivos());
@@ -53,26 +49,14 @@ public class EquipoController {
 
     //Actualizar
     @PutMapping("/{equipoId}")
-    public ResponseEntity<EquipoResponseDTO> actualizar(@PathVariable Long id, @Valid @RequestBody EquipoRequestDTO dto){
-        return equipoService.actualizar(id, dto).map(ResponseEntity::ok).orElseGet(()->ResponseEntity.notFound().build());
+    public ResponseEntity<EquipoResponseDTO> actualizar(@PathVariable Long equipoId, @Valid @RequestBody EquipoRequestDTO dto){
+        return equipoService.actualizar(equipoId, dto).map(ResponseEntity::ok).orElseGet(()->ResponseEntity.notFound().build());
     }
 
-    //Eliminar
     @DeleteMapping("/{equipoId}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id, @RequestParam String rol){
-        if (!rol.equalsIgnoreCase("ARBITRO") && !rol.equalsIgnoreCase("ADMIN")){
-            throw new RuntimeException("Acceso denegado: solo los Arbitros y Administradores estan autorizados para eliminar equipos");
-        }
-        if (equipoService.buscarPorId(id).isEmpty()){
-            return ResponseEntity.notFound().build();
-        }
-        equipoService.eliminar(id);
+    public ResponseEntity<Void> eliminar(@PathVariable Long equipoId, @RequestHeader("usuarioId") Long ejecutorId) {
+        equipoService.eliminar(equipoId, ejecutorId);
         return ResponseEntity.noContent().build();
-    }
-    //Busqueda top equipos
-    @GetMapping("/top")
-    public ResponseEntity<List<EquipoResponseDTO>> obtenerTopEquipos(@RequestParam(defaultValue = "3") Integer top){
-        return ResponseEntity.ok(equipoService.obtenerTop(top));
     }
 
 }

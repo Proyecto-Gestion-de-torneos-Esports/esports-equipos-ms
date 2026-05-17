@@ -6,6 +6,7 @@ import com.torneos.equipos.client.UsuarioClient;
 import com.torneos.equipos.dto.AuditoriaRequestDTO;
 import com.torneos.equipos.dto.EquipoRequestDTO;
 import com.torneos.equipos.dto.EquipoResponseDTO;
+import com.torneos.equipos.dto.UsuarioDTO;
 import com.torneos.equipos.model.Equipo;
 import com.torneos.equipos.model.Integrantes;
 import com.torneos.equipos.model.Rol;
@@ -38,7 +39,6 @@ public class EquipoService {
                 equipo.getEquipoId(),
                 equipo.getNombre(),
                 equipo.getRegion(),
-                equipo.getRanking(),
                 equipo.getFechaFundacion(),
                 equipo.getCorreoContacto(),
                 equipo.getActivo()
@@ -74,8 +74,6 @@ public class EquipoService {
 
         );
         return resultado;
-
-
     }
 
     //Para guardar un equipo
@@ -85,7 +83,6 @@ public class EquipoService {
                 null,
                 dto.getNombre(),
                 dto.getRegion(),
-                dto.getRanking(),
                 dto.getFechaFundacion(),
                 dto.getCorreoContacto(),
                 true,
@@ -94,9 +91,6 @@ public class EquipoService {
         );
         EquipoResponseDTO respuesta = mapToDTO(equipoRepository.save(equipo));
         log.info("Equipo '{}' creado y guardado correctamente en la base de datos",dto.getNombre());
-
-
-
         return respuesta;
     }
 
@@ -106,7 +100,6 @@ public class EquipoService {
             log.info("Equipo con ID: {} encontrado. Actualizando sus datos",id);
             existente.setNombre(dto.getNombre());
             existente.setRegion(dto.getRegion());
-            existente.setRanking(dto.getRanking());
             existente.setFechaFundacion(dto.getFechaFundacion());
             existente.setCorreoContacto(dto.getCorreoContacto());
             existente.setActivo(dto.getActivo());
@@ -121,37 +114,45 @@ public class EquipoService {
     }
 
     @Transactional
-    public void eliminar(Long id){
-        log.info("Procesando solicitud para eliminar (inactivo) el equipo con ID: {}",id);
-        equipoRepository.findByEquipoIdAndActivoTrue(id).ifPresentOrElse(existente->{
-                    existente.setActivo(false);
-                    equipoRepository.save(existente);
-                    log.info("El equipo '{}' (ID: {}) fue desactivado correctamente", existente.getNombre(), id);
-                    String detalleAuditoria = "se desactivo el equipo; " + existente.getNombre() + " con ID: " + id;
-                    generarAuditoria(detalleAuditoria);
+    public void eliminar(Long equipoId, Long ejecutorId) {
+        log.info("Procesando solicitud para eliminar (inactivo) el equipo con ID: {} por el ejecutor ID: {}", equipoId, ejecutorId);
+        UsuarioDTO ejecutor = usuarioClient.obtenerUsuarioPorId(ejecutorId);
+        String rol = ejecutor.getRol();
+        if (!"ADMIN".equalsIgnoreCase(rol) && !"ARBITRO".equalsIgnoreCase(rol)) {
+            log.warn("Intento de eliminación de equipo no autorizado por el usuario ID: {}", ejecutorId);
+            throw new IllegalArgumentException("Acceso denegado: solo los Árbitros y Administradores están autorizados para eliminar equipos.");
+        }
+        Equipo existente = equipoRepository.findByEquipoIdAndActivoTrue(equipoId)
+                .orElseThrow(() -> {
+                    log.warn("Intento de eliminación fallido: No se encontró ningún equipo activo con el ID: {}", equipoId);
+                    return new java.util.NoSuchElementException("No se encontró ningún equipo activo con el ID: " + equipoId);
+                });
+        existente.setActivo(false);
+        equipoRepository.save(existente);
 
-                },()->{
-                    log.warn("Intento de eliminación fallido: No se encontro ningun equipo activo con el ID: {}", id);
-                }
-        );
+        log.info("El equipo '{}' (ID: {}) fue desactivado correctamente por el ejecutor ID: {}",
+                existente.getNombre(), equipoId, ejecutorId);
+        String detalleAuditoria = "El usuario ID " + ejecutorId + " desactivó el equipo; " + existente.getNombre() + " con ID: " + equipoId;
+        generarAuditoria(detalleAuditoria);
     }
 
-    @Transactional(readOnly = true)
-    public List<EquipoResponseDTO> obtenerTop(Integer top){
-        List<Equipo> equiposTop = equipoRepository.obtenerTopEquipos(top);
-        log.info("Consulta exitosa. Hay {} equipos para el Top {}", equiposTop.size(), top);
-        return equipoRepository.obtenerTopEquipos(top).stream().map(this::mapToDTO).collect(Collectors.toList());
-    }
+    @Transactional
+    public String inscribirIntegrante(Long equipoId, Long usuarioId, Rol rol, Long ejecutorId) {
+        UsuarioDTO ejecutor = usuarioClient.obtenerUsuarioPorId(ejecutorId);
+        String rolEjecutor = ejecutor.getRol();
 
-    public String inscribirIntegrante(Long equipoId, Long usuarioId, Rol rol) {
+        if (!"ADMIN".equalsIgnoreCase(rolEjecutor) && !"ARBITRO".equalsIgnoreCase(rolEjecutor)) {
+            log.warn("Intento de inscripción no autorizado por el usuario ID: {}", ejecutorId);
+            throw new IllegalArgumentException("Acceso denegado: solo los Árbitros y Administradores pueden inscribir jugadores.");
+        }
         Equipo equipo = equipoRepository.findById(equipoId)
-                .orElseThrow(() -> new RuntimeException("Equipo no encontrado con ID: " + equipoId));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Equipo no encontrado con ID: " + equipoId));
 
         if (equipo.getListaIntegrantes().size() >= 6) {
-            throw new RuntimeException("Error: El equipo ya alcanzó el máximo de 6 integrantes (incluyendo coach).");
+            log.warn("Intento de inscripción fallido: El equipo '{}' ya está lleno.", equipo.getNombre());
+            throw new IllegalArgumentException("Error: El equipo ya alcanzó el máximo de 6 integrantes (incluyendo coach).");
         }
-
-        String nombreReal = usuarioClient.obtenerUsuarioPorId(usuarioId).getNombre();
+        String nombreReal = usuarioClient.obtenerUsuarioPorId(usuarioId).getNombreUsuario();
 
         Integrantes nuevo = new Integrantes();
         nuevo.setUsuarioId(usuarioId);
@@ -161,10 +162,10 @@ public class EquipoService {
 
         integrantesRepository.save(nuevo);
 
+        log.info("Usuario '{}' (ID: {}) inscrito como {} en el equipo '{}' por el ejecutor ID: {}",
+                nombreReal, usuarioId, rol, equipo.getNombre(), ejecutorId);
         return "Usuario '" + nombreReal + "' inscrito correctamente en el equipo " + equipo.getNombre();
-
     }
-
     public void generarAuditoria(String detalle){
         AuditoriaRequestDTO dto = new AuditoriaRequestDTO();
         LocalDate ahora = LocalDate.now();
@@ -173,9 +174,5 @@ public class EquipoService {
         auditoriaClient.generarAuditoria(dto);
         log.info("Auditoria generada con exito!");
     }
-
-
-
-
 
 }

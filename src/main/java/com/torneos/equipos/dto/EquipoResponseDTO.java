@@ -11,10 +11,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class EquipoResponseDTO {
 
-    private Long id;
+    private Long equipoId;
     private String nombre;
     private String region;
-    private Integer ranking;
     private LocalDate fechaFundacion;
     private String correoContacto;
     private Boolean activo;

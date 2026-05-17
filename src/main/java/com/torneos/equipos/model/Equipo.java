@@ -26,9 +26,6 @@ public class Equipo {
     @Column(nullable = false, length = 50)
     private String region;
 
-    @Column(nullable = false)
-    private Integer ranking;
-
     @Column(name = "fecha_fundacion", nullable = false)
     private LocalDate fechaFundacion;
 

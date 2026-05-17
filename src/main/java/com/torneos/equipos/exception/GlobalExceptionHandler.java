@@ -28,4 +28,24 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(error);
     }
+    @ExceptionHandler(feign.FeignException.class)
+    public ResponseEntity<?> handleFeignException(feign.FeignException ex) {
+
+        String respuestaOriginal = ex.contentUTF8();
+        if (respuestaOriginal != null && !respuestaOriginal.isEmpty()) {
+            return ResponseEntity.status(ex.status())
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .body(respuestaOriginal);
+        }
+        if (ex.status() == 404) {
+            Map<String, String> error = new java.util.LinkedHashMap<>();
+            error.put("error", "Recurso no encontrado");
+            error.put("mensaje", "El usuario que intenta buscar, asignar o ejecutar la acción no existe o se encuentra inactivo.");
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(error);
+        }
+        Map<String, String> error = new java.util.LinkedHashMap<>();
+        error.put("error", "Error en servicio externo");
+        error.put("mensaje", "Ocurrió un problema de comunicación. " + ex.status());
+        return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
 }
