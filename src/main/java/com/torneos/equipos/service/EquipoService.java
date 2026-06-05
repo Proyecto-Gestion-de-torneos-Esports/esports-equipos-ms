@@ -94,7 +94,15 @@ public class EquipoService {
     }
 
     @Transactional
-    public Optional<EquipoResponseDTO> actualizar(Long id, EquipoRequestDTO dto){
+    public Optional<EquipoResponseDTO> actualizar(Long id, EquipoRequestDTO dto, Long ejecutorId){
+        UsuarioDTO ejecutor = usuarioClient.obtenerUsuarioPorId(ejecutorId);
+        String rolEjecutor = ejecutor.getRol();
+
+        if (!"ADMIN".equalsIgnoreCase(rolEjecutor) && !"ARBITRO".equalsIgnoreCase(rolEjecutor)) {
+            log.warn("Intento de actualización de equipo no autorizado por el usuario ID: {}", ejecutorId);
+            throw new IllegalArgumentException("Acceso denegado: solo los Árbitros y Administradores pueden actualizar equipos.");
+        }
+
         return equipoRepository.findByEquipoIdAndActivoTrue(id).map(existente->{
             log.info("Equipo con ID: {} encontrado. Actualizando sus datos",id);
             existente.setNombre(dto.getNombre());
@@ -135,7 +143,7 @@ public class EquipoService {
     }
 
     @Transactional
-    public String inscribirIntegrante(Long equipoId, Long usuarioId, Rol rol, Long ejecutorId) {
+    public String inscribirIntegrante(Long equipoId, Long usuarioId, Long ejecutorId) {
         UsuarioDTO ejecutor = usuarioClient.obtenerUsuarioPorId(ejecutorId);
         String rolEjecutor = ejecutor.getRol();
 
@@ -146,22 +154,39 @@ public class EquipoService {
         Equipo equipo = equipoRepository.findById(equipoId)
                 .orElseThrow(() -> new java.util.NoSuchElementException("Equipo no encontrado con ID: " + equipoId));
 
-        if (equipo.getListaIntegrantes().size() >= 6) {
+        if (equipo.getListaIntegrantes() != null && equipo.getListaIntegrantes().size() >=6) {
             log.warn("Intento de inscripción fallido: El equipo '{}' ya está lleno.", equipo.getNombre());
             throw new IllegalArgumentException("Error: El equipo ya alcanzó el máximo de 6 integrantes (incluyendo coach).");
         }
+        UsuarioDTO usuarioAInscribir = usuarioClient.obtenerUsuarioPorId(usuarioId);
         String nombreReal = usuarioClient.obtenerUsuarioPorId(usuarioId).getNombreUsuario();
+        String rolAInscribir= usuarioAInscribir.getRol();
+
+        if ("ADMIN".equalsIgnoreCase(rolAInscribir) || "ARBITRO".equalsIgnoreCase(rolAInscribir)) {
+            log.warn("Intento de inscripción fallido: El usuario ID {} es parte del staff", usuarioId);
+            throw new IllegalArgumentException("Error: Los Administradores y Árbitros no pueden ser parte de un Equipo.");
+        }
+        Rol rolReal = Rol.valueOf(rolAInscribir.toUpperCase());
+        if (rolReal == Rol.COACH) {
+            boolean yaTieneCoach = equipo.getListaIntegrantes().stream()
+                    .anyMatch(integrante -> integrante.getRol() == Rol.COACH);
+
+            if (yaTieneCoach) {
+                log.warn("Intento de inscripción fallido: El equipo ID {} ya tiene coach", equipoId);
+                throw new IllegalArgumentException("Error: El equipo ya alcanzó el máximo de 1 coach.");
+            }
+        }
 
         Integrantes nuevo = new Integrantes();
         nuevo.setUsuarioId(usuarioId);
         nuevo.setNombre(nombreReal);
-        nuevo.setRol(rol);
+        nuevo.setRol(rolReal);
         nuevo.setEquipo(equipo);
 
         integrantesRepository.save(nuevo);
 
         log.info("Usuario '{}' (ID: {}) inscrito como {} en el equipo '{}' por el ejecutor ID: {}",
-                nombreReal, usuarioId, rol, equipo.getNombre(), ejecutorId);
+                nombreReal, usuarioId, rolReal, equipo.getNombre(), ejecutorId);
         return "Usuario '" + nombreReal + "' inscrito correctamente en el equipo " + equipo.getNombre();
     }
 

@@ -33,9 +33,9 @@ public class EquipoController {
     }
 
     @PostMapping("/{equipoId}/integrantes")
-    public ResponseEntity<?> inscribirIntegrante(@PathVariable Long equipoId, @RequestParam Long usuarioId, @RequestParam Rol rol,
+    public ResponseEntity<?> inscribirIntegrante(@PathVariable Long equipoId, @RequestParam Long usuarioId,
                                                  @RequestHeader("usuarioId") Long ejecutorId) {
-        String respuesta = equipoService.inscribirIntegrante(equipoId, usuarioId, rol, ejecutorId);
+        String respuesta = equipoService.inscribirIntegrante(equipoId, usuarioId, ejecutorId);
         return ResponseEntity.ok(respuesta);
     }
 
@@ -57,8 +57,8 @@ public class EquipoController {
 
     //Actualizar
     @PutMapping("/{equipoId}")
-    public ResponseEntity<EquipoResponseDTO> actualizar(@PathVariable Long equipoId, @Valid @RequestBody EquipoRequestDTO dto){
-        return equipoService.actualizar(equipoId, dto).map(ResponseEntity::ok).orElseGet(()->ResponseEntity.notFound().build());
+    public ResponseEntity<EquipoResponseDTO> actualizar(@PathVariable Long equipoId, @Valid @RequestBody EquipoRequestDTO dto, @RequestHeader("usuarioId") Long ejecutorId){
+        return equipoService.actualizar(equipoId, dto, ejecutorId).map(ResponseEntity::ok).orElseGet(()->ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{equipoId}")
