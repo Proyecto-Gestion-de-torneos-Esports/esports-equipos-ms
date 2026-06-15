@@ -16,8 +16,8 @@ public class Integrantes {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long integranteId;
 
-    @Column(name = "usuario_id",nullable = false)
-    private Long usuarioId;
+    @Column(name = "id_usuario",nullable = false)
+    private Long idUsuario;
 
     @Column(nullable = false, length = 100)
     private String nombre;

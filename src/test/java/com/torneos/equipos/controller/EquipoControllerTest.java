@@ -95,7 +95,7 @@ public class EquipoControllerTest {
 
         mockMvc.perform(delete("/api/equipos/1")
                         .with(csrf()) // Token simulado para petición DELETE
-                        .header("usuarioId", 2L))
+                        .header("idUsuario", 2L))
                 .andExpect(status().isNoContent());
         verify(equipoService, times(1)).eliminar(1L, 2L);
     }

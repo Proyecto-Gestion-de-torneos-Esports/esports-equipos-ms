@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Profile("dev")
 @Component
 public class DataLoader implements CommandLineRunner {
+
     @Autowired
     private EquipoRepository equipoRepository;
 
@@ -32,6 +33,7 @@ public class DataLoader implements CommandLineRunner {
         Random random = new Random();
         String[] regiones = {"LATAM", "EU", "NA", "BR"};
         System.out.println("Iniciando DataLoader: Generando datos falsos de Equipos e Integrantes...");
+
         for (int i = 0; i < 15; i++) {
             Equipo equipo = new Equipo();
             // Generar un nombre de equipo estilo e-sports
@@ -43,12 +45,14 @@ public class DataLoader implements CommandLineRunner {
             equipo.setActivo(random.nextInt(10) < 8);
 
             List<Integrantes> listaIntegrantes = new ArrayList<>();
-            int cantidadIntegrantes = random.nextInt(4) + 3; // Entre 3 y 6 integrantes
+            int cantidadIntegrantes = random.nextInt(4) + 3;
 
             for (int j = 0; j < cantidadIntegrantes; j++) {
                 Integrantes integrante = new Integrantes();
                 integrante.setNombre(faker.esports().player());
-                integrante.setUsuarioId((long) faker.number().numberBetween(1, 30));
+
+                integrante.setIdUsuario((long) faker.number().numberBetween(1, 30));
+
                 integrante.setRol(j == 0 ? Rol.COACH : Rol.JUGADOR);
                 integrante.setEquipo(equipo);
 

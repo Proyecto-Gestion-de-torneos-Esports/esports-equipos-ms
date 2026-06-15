@@ -1,6 +1,5 @@
 package com.torneos.equipos.service;
 
-
 import com.torneos.equipos.client.AuditoriaClient;
 import com.torneos.equipos.client.UsuarioClient;
 import com.torneos.equipos.dto.AuditoriaRequestDTO;
@@ -33,7 +32,6 @@ public class EquipoService {
     private final UsuarioClient usuarioClient;
     private final AuditoriaClient auditoriaClient;
 
-
     private EquipoResponseDTO mapToDTO(Equipo equipo){
         int cantidad = (equipo.getListaIntegrantes()!= null) ? equipo.getListaIntegrantes().size() : 0;
         return new EquipoResponseDTO(
@@ -47,7 +45,6 @@ public class EquipoService {
         );
     }
 
-    //Para obtener todos los equipos activos e inactivos
     public List<EquipoResponseDTO> listarTodos(){
         log.info("Listando todos los equipos");
         List<Equipo> equipos = equipoRepository.findAllByOrderByEquipoIdAsc();
@@ -55,7 +52,6 @@ public class EquipoService {
         return equipos.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
-    //Para obtener unicamente los equipos activos
     @Transactional(readOnly = true)
     public List<EquipoResponseDTO> obtenerActivos(){
         log.info("Listando solo los equipos activos");
@@ -63,7 +59,7 @@ public class EquipoService {
         log.info("Hay {} equipos activos", activos.size());
         return activos.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
-    //Para obtener equipo mediante el Id
+
     @Transactional(readOnly = true)
     public Optional<EquipoResponseDTO> buscarPorId(Long equipoId){
         Optional<EquipoResponseDTO> resultado = equipoRepository.findByEquipoIdAndActivoTrue(equipoId).map(this::mapToDTO);
@@ -74,6 +70,7 @@ public class EquipoService {
         );
         return resultado;
     }
+
     //Para guardar un equipo
     @Transactional
     public EquipoResponseDTO guardar(EquipoRequestDTO dto){
@@ -143,7 +140,8 @@ public class EquipoService {
     }
 
     @Transactional
-    public String inscribirIntegrante(Long equipoId, Long usuarioId, Long ejecutorId) {
+    // CAMBIO: usuarioId a idUsuario
+    public String inscribirIntegrante(Long equipoId, Long idUsuario, Long ejecutorId) {
         UsuarioDTO ejecutor = usuarioClient.obtenerUsuarioPorId(ejecutorId);
         String rolEjecutor = ejecutor.getRol();
 
@@ -158,12 +156,12 @@ public class EquipoService {
             log.warn("Intento de inscripción fallido: El equipo '{}' ya está lleno.", equipo.getNombre());
             throw new IllegalArgumentException("Error: El equipo ya alcanzó el máximo de 6 integrantes (incluyendo coach).");
         }
-        UsuarioDTO usuarioAInscribir = usuarioClient.obtenerUsuarioPorId(usuarioId);
-        String nombreReal = usuarioClient.obtenerUsuarioPorId(usuarioId).getNombreUsuario();
+        UsuarioDTO usuarioAInscribir = usuarioClient.obtenerUsuarioPorId(idUsuario);
+        String nombreReal = usuarioClient.obtenerUsuarioPorId(idUsuario).getNombreUsuario();
         String rolAInscribir= usuarioAInscribir.getRol();
 
         if ("ADMIN".equalsIgnoreCase(rolAInscribir) || "ARBITRO".equalsIgnoreCase(rolAInscribir)) {
-            log.warn("Intento de inscripción fallido: El usuario ID {} es parte del staff", usuarioId);
+            log.warn("Intento de inscripción fallido: El usuario ID {} es parte del staff", idUsuario);
             throw new IllegalArgumentException("Error: Los Administradores y Árbitros no pueden ser parte de un Equipo.");
         }
         Rol rolReal = Rol.valueOf(rolAInscribir.toUpperCase());
@@ -178,15 +176,16 @@ public class EquipoService {
         }
 
         Integrantes nuevo = new Integrantes();
-        nuevo.setUsuarioId(usuarioId);
+        nuevo.setIdUsuario(idUsuario);
         nuevo.setNombre(nombreReal);
         nuevo.setRol(rolReal);
         nuevo.setEquipo(equipo);
 
         integrantesRepository.save(nuevo);
 
+        // CAMBIO: usuarioId a idUsuario
         log.info("Usuario '{}' (ID: {}) inscrito como {} en el equipo '{}' por el ejecutor ID: {}",
-                nombreReal, usuarioId, rolReal, equipo.getNombre(), ejecutorId);
+                nombreReal, idUsuario, rolReal, equipo.getNombre(), ejecutorId);
         return "Usuario '" + nombreReal + "' inscrito correctamente en el equipo " + equipo.getNombre();
     }
 
@@ -204,5 +203,4 @@ public class EquipoService {
         auditoriaClient.generarAuditoria(dto);
         log.info("Auditoria generada con exito!");
     }
-
 }
